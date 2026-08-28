@@ -1,0 +1,1 @@
+- [Imported planner database setup](imported-planner-db.md) — sync the Drizzle schema before testing API-backed planner screens.

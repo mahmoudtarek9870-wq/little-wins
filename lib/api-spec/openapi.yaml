@@ -1,0 +1,527 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: planner
+    description: Personal task planner operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [planner]
+      summary: Get the current personal-day dashboard
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [planner]
+      summary: Get planner settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [planner]
+      summary: Update planner settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [planner]
+      summary: List tasks for the current personal day
+      responses:
+        "200":
+          description: Current day tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [planner]
+      summary: Add a task to the current personal day
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{taskId}:
+    patch:
+      operationId: updateTask
+      tags: [planner]
+      summary: Update a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCompletionResponse"
+    delete:
+      operationId: deleteTask
+      tags: [planner]
+      summary: Delete a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "204":
+          description: Deleted
+  /tasks/{taskId}/complete:
+    post:
+      operationId: completeTask
+      tags: [planner]
+      summary: Toggle completion for a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCompletion"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /history:
+    get:
+      operationId: listHistory
+      tags: [planner]
+      summary: List archived personal days
+      responses:
+        "200":
+          description: Archived days
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryDay"
+  /history/{dayId}:
+    get:
+      operationId: getHistoryDay
+      tags: [planner]
+      summary: Get a day from personal-day history
+      parameters:
+        - $ref: "#/components/parameters/DayId"
+      responses:
+        "200":
+          description: Archived day details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryDayDetail"
+  /challenges:
+    get:
+      operationId: listChallenges
+      tags: [planner]
+      summary: List challenges
+      responses:
+        "200":
+          description: Challenges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+    post:
+      operationId: createChallenge
+      tags: [planner]
+      summary: Create a challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeInput"
+      responses:
+        "201":
+          description: Created challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+  /challenges/{challengeId}:
+    get:
+      operationId: getChallenge
+      tags: [planner]
+      summary: Get challenge details
+      parameters:
+        - $ref: "#/components/parameters/ChallengeId"
+      responses:
+        "200":
+          description: Challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeDetail"
+  /stats:
+    get:
+      operationId: getStats
+      tags: [planner]
+      summary: Get planner statistics
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+components:
+  parameters:
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: number
+    DayId:
+      name: dayId
+      in: path
+      required: true
+      schema:
+        type: number
+    ChallengeId:
+      name: challengeId
+      in: path
+      required: true
+      schema:
+        type: number
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Settings:
+      type: object
+      required: [id, sleepTime, wakeTime, remindersEnabled, reminderFrequency, theme, carryOver, doubleXpDaysPerWeek, perfectDayBonus, quietHoursStart, quietHoursEnd]
+      properties:
+        id: { type: number }
+        sleepTime: { type: string }
+        wakeTime: { type: string }
+        remindersEnabled: { type: boolean }
+        reminderFrequency: { type: string }
+        theme: { type: string }
+        carryOver: { type: boolean }
+        doubleXpDaysPerWeek: { type: number }
+        perfectDayBonus: { type: number }
+        quietHoursStart: { type: string }
+        quietHoursEnd: { type: string }
+    SettingsUpdate:
+      type: object
+      properties:
+        sleepTime: { type: string }
+        wakeTime: { type: string }
+        remindersEnabled: { type: boolean }
+        reminderFrequency: { type: string }
+        theme: { type: string }
+        carryOver: { type: boolean }
+        doubleXpDaysPerWeek: { type: number, minimum: 2, maximum: 4 }
+        perfectDayBonus: { type: number, minimum: 0 }
+        quietHoursStart: { type: string }
+        quietHoursEnd: { type: string }
+    Task:
+      type: object
+      required: [id, title, notes, completed, createdAt, completedAt, xp, dayId, challengeIds, priority, category, durationMinutes, isBoss]
+      properties:
+        id: { type: number }
+        title: { type: string }
+        notes: { type: ["string", "null"] }
+        completed: { type: boolean }
+        createdAt: { type: string }
+        completedAt: { type: ["string", "null"] }
+        xp: { type: number }
+        dayId: { type: number }
+        priority: { type: string }
+        category: { type: string }
+        durationMinutes: { type: ["number", "null"] }
+        isBoss: { type: boolean }
+        challengeIds:
+          type: array
+          items: { type: number }
+    TaskInput:
+      type: object
+      required: [title, xp]
+      properties:
+        title: { type: string, minLength: 1 }
+        notes: { type: ["string", "null"] }
+        xp: { type: number, minimum: 1 }
+        priority: { type: string }
+        category: { type: string }
+        durationMinutes: { type: ["number", "null"], minimum: 1 }
+        isBoss: { type: boolean }
+        challengeIds:
+          type: array
+          items: { type: number }
+    TaskUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        notes: { type: ["string", "null"] }
+        xp: { type: number, minimum: 1 }
+        priority: { type: string }
+        category: { type: string }
+        durationMinutes: { type: ["number", "null"], minimum: 1 }
+        isBoss: { type: boolean }
+        challengeIds:
+          type: array
+          items: { type: number }
+    TaskCompletion:
+      type: object
+      properties:
+        completed: { type: boolean }
+        idempotencyKey: { type: string, minLength: 1 }
+    Rank:
+      type: object
+      required: [name, minimum, nextName, nextMinimum, totalXp, level, nextLevelXp, xpIntoLevel, xpToNextLevel, progressPercent, totalCompleted, remaining]
+      properties:
+        name: { type: string }
+        minimum: { type: number }
+        totalXp: { type: number }
+        level: { type: number }
+        nextLevelXp: { type: number }
+        xpIntoLevel: { type: number }
+        xpToNextLevel: { type: number }
+        nextName: { type: ["string", "null"] }
+        nextMinimum: { type: ["number", "null"] }
+        totalCompleted: { type: number }
+        progressPercent: { type: number }
+        remaining: { type: number }
+    Dashboard:
+      type: object
+      required: [day, tasks, rank, streak, reminder, settings]
+      properties:
+        day:
+          $ref: "#/components/schemas/DaySummary"
+        tasks:
+          type: array
+          items: { $ref: "#/components/schemas/Task" }
+        rank:
+          $ref: "#/components/schemas/Rank"
+        streak:
+          $ref: "#/components/schemas/Streak"
+        reminder:
+          $ref: "#/components/schemas/Reminder"
+        settings:
+          $ref: "#/components/schemas/Settings"
+    DaySummary:
+      type: object
+      required: [id, label, dateLabel, completed, total, progressPercent, endsAt, hoursRemaining, doubleXp]
+      properties:
+        id: { type: number }
+        label: { type: string }
+        dateLabel: { type: string }
+        completed: { type: number }
+        total: { type: number }
+        progressPercent: { type: number }
+        endsAt: { type: string }
+        hoursRemaining: { type: number }
+        doubleXp: { type: boolean }
+    TaskCompletionResponse:
+      allOf:
+        - $ref: "#/components/schemas/Task"
+        - type: object
+          required: [earnedXp, level, rank, leveledUp, rankedUp, perfectDay, doubleXp]
+          properties:
+            earnedXp: { type: number }
+            level: { type: number }
+            rank: { type: string }
+            leveledUp: { type: boolean }
+            rankedUp: { type: boolean }
+            perfectDay: { type: boolean }
+            doubleXp: { type: boolean }
+    Streak:
+      type: object
+      required: [current, longest]
+      properties:
+        current: { type: number }
+        longest: { type: number }
+    Reminder:
+      type: object
+      required: [message, urgency, minutesUntilSleep]
+      properties:
+        message: { type: string }
+        urgency: { type: string }
+        minutesUntilSleep: { type: number }
+    HistoryDay:
+      type: object
+      required: [id, dateLabel, completed, total, progressPercent, xpEarned, levelAtEnd, rankName, dailyScore, perfectDay, doubleXp, streakAtEnd]
+      properties:
+        id: { type: number }
+        dateLabel: { type: string }
+        completed: { type: number }
+        total: { type: number }
+        progressPercent: { type: number }
+        xpEarned: { type: number }
+        levelAtEnd: { type: number }
+        rankName: { type: string }
+        dailyScore: { type: number }
+        perfectDay: { type: boolean }
+        doubleXp: { type: boolean }
+        streakAtEnd: { type: number }
+    HistoryDayDetail:
+      allOf:
+        - $ref: "#/components/schemas/HistoryDay"
+        - type: object
+          required: [tasks, rankName, notes]
+          properties:
+            tasks:
+              type: array
+              items: { $ref: "#/components/schemas/Task" }
+            rankName: { type: string }
+            notes: { type: ["string", "null"] }
+    Challenge:
+      type: object
+      required: [id, name, durationDays, dayNumber, remainingDays, completedTasks, totalTasks, progressPercent, status, taskNames]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        durationDays: { type: number }
+        dayNumber: { type: number }
+        remainingDays: { type: number }
+        completedTasks: { type: number }
+        totalTasks: { type: number }
+        progressPercent: { type: number }
+        status: { type: string }
+        taskNames:
+          type: array
+          items: { type: string }
+    ChallengeInput:
+      type: object
+      required: [name, durationDays, taskNames]
+      properties:
+        name: { type: string, minLength: 1 }
+        durationDays: { type: number, minimum: 1 }
+        taskNames:
+          type: array
+          items: { type: string }
+    ChallengeDetail:
+      allOf:
+        - $ref: "#/components/schemas/Challenge"
+        - type: object
+          required: [history, bestDay, worstDay, consistency]
+          properties:
+            history:
+              type: array
+              items:
+                $ref: "#/components/schemas/ChallengeDay"
+            bestDay: { type: ["string", "null"] }
+            worstDay: { type: ["string", "null"] }
+            consistency: { type: number }
+    ChallengeDay:
+      type: object
+      required: [dayNumber, dateLabel, completed, total, progressPercent]
+      properties:
+        dayNumber: { type: number }
+        dateLabel: { type: string }
+        completed: { type: number }
+        total: { type: number }
+        progressPercent: { type: number }
+    Stats:
+      type: object
+      required: [totalCompleted, totalUnfinished, averagePerDay, completionPercent, currentStreak, longestStreak, perfectDays, totalXp, currentLevel, currentRank, xpToNextLevel, averageXpPerDay, doubleXpXpEarned, daily, weekly, monthly, rankHistory]
+      properties:
+        totalCompleted: { type: number }
+        totalUnfinished: { type: number }
+        averagePerDay: { type: number }
+        completionPercent: { type: number }
+        totalXp: { type: number }
+        currentLevel: { type: number }
+        currentRank: { type: string }
+        xpToNextLevel: { type: number }
+        perfectDays: { type: number }
+        averageXpPerDay: { type: number }
+        doubleXpXpEarned: { type: number }
+        currentStreak: { type: number }
+        longestStreak: { type: number }
+        daily:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPoint"
+        weekly:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPoint"
+        monthly:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPoint"
+        rankHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatPoint"
+    StatPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label: { type: string }
+        value: { type: number }
+

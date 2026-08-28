@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Gamified Task Planner"
+description = "A motivating personal task planner that turns daily work into visible progress with personal-day scheduling, ranks, streaks, challenges, history, reminders, and statistics."
+version = "1.0.0"
+id = "artifacts/gamified-task-planner"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18769
+
+[services.development]
+run = "pnpm --filter @workspace/gamified-task-planner run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/gamified-task-planner", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/gamified-task-planner/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18769"
+BASE_PATH = "/"
